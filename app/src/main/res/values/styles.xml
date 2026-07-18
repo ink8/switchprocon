@@ -1,0 +1,68 @@
+<resources>
+
+    <!-- Base key: a Material button we fully re-tint and de-inset so we control the size. -->
+    <style name="Key" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textStyle">bold</item>
+        <item name="backgroundTint">@color/key_selector</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingLeft">0dp</item>
+        <item name="android:paddingRight">0dp</item>
+        <item name="elevation">0dp</item>
+        <item name="rippleColor">@color/accent</item>
+    </style>
+
+    <style name="Face" parent="Key">
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:textSize">22sp</item>
+        <item name="cornerRadius">40dp</item>
+    </style>
+
+    <style name="Fcell">
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">64dp</item>
+    </style>
+
+    <style name="Dpad" parent="Key">
+        <item name="android:layout_width">54dp</item>
+        <item name="android:layout_height">54dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Dcell">
+        <item name="android:layout_width">54dp</item>
+        <item name="android:layout_height">54dp</item>
+    </style>
+
+    <style name="Shoulder" parent="Key">
+        <item name="android:layout_width">78dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Sys" parent="Key">
+        <item name="android:layout_width">54dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="cornerRadius">20dp</item>
+    </style>
+
+    <style name="Pill" parent="Key">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:paddingLeft">18dp</item>
+        <item name="android:paddingRight">18dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="cornerRadius">20dp</item>
+    </style>
+
+</resources>

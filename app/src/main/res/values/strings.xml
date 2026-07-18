@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">SwitchProCon</string>
+    <string name="notif_running">Controller link active</string>
+
+    <string name="status_idle">Not registered</string>
+    <string name="status_unsupported">This device\'s Bluetooth can\'t emulate a controller</string>
+    <string name="status_registered">Ready — open \"Change Grip/Order\" on your Switch</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="need_bluetooth_permission">Bluetooth permission is required</string>
+
+    <string name="connect">Connect</string>
+    <string name="rec">REC</string>
+    <string name="play">PLAY</string>
+    <string name="loop">LOOP</string>
+
+    <string name="btn_a">A</string>
+    <string name="btn_b">B</string>
+    <string name="btn_x">X</string>
+    <string name="btn_y">Y</string>
+    <string name="btn_l">L</string>
+    <string name="btn_r">R</string>
+    <string name="btn_zl">ZL</string>
+    <string name="btn_zr">ZR</string>
+    <string name="btn_up">▲</string>
+    <string name="btn_down">▼</string>
+    <string name="btn_left">◀</string>
+    <string name="btn_right">▶</string>
+    <string name="btn_minus">−</string>
+    <string name="btn_plus">+</string>
+    <string name="btn_home">⌂</string>
+    <string name="btn_capture">◉</string>
+</resources>

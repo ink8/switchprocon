@@ -1,0 +1,13 @@
+# Normalize text line endings; keep shell scripts LF so gradlew runs on Linux/CI.
+* text=auto
+*.kt text
+*.xml text
+*.kts text
+*.md text
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.apk binary
+*.png binary
+*.keystore binary
