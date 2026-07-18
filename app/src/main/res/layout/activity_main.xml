@@ -115,6 +115,51 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- ===== Center logo ===== -->
+    <LinearLayout
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_stat_controller"
+            app:tint="@color/accent"
+            android:contentDescription="@string/app_name" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logo_switch"
+                android:textColor="@color/text"
+                android:textSize="26sp"
+                android:textStyle="bold|italic"
+                android:letterSpacing="0.12" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logo_procon"
+                android:textColor="@color/accent"
+                android:textSize="26sp"
+                android:textStyle="bold|italic"
+                android:letterSpacing="0.12" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- ===== Center system + macro controls ===== -->
     <LinearLayout
         android:id="@+id/systemRow"
