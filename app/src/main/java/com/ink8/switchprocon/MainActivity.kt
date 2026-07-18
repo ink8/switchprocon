@@ -89,14 +89,18 @@ class MainActivity : AppCompatActivity(), HidService.StatusListener {
             binding.btnUp, binding.btnDown, binding.btnLeft, binding.btnRight,
             binding.btnL, binding.btnR, binding.btnZl, binding.btnZr,
             binding.btnMinus, binding.btnPlus, binding.btnHome, binding.btnCapture,
-            binding.btnConnect, binding.btnP1, binding.btnP2, binding.btnP3,
-            binding.btnSettings, binding.btnM1, binding.btnM2, binding.btnM3,
-            binding.btnM4, binding.btnLoop
+            binding.btnConnect, binding.btnReset, binding.btnP1, binding.btnP2,
+            binding.btnP3, binding.btnSettings, binding.btnM1, binding.btnM2,
+            binding.btnM3, binding.btnM4, binding.btnLoop
         )
         macroButtons = listOf(binding.btnM1, binding.btnM2, binding.btnM3, binding.btnM4)
         profileButtons = listOf(binding.btnP1, binding.btnP2, binding.btnP3)
 
         binding.btnConnect.setOnClickListener { pickHostAndConnect() }
+        binding.btnReset.setOnClickListener {
+            service?.resetConnection()
+            toast(getString(R.string.reset_done))
+        }
         binding.btnSettings.setOnClickListener { showSettings() }
         applyAccent(settings.accent)
 

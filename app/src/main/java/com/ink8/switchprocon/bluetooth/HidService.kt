@@ -108,15 +108,7 @@ class HidService : Service() {
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
                 if (profile != BluetoothProfile.HID_DEVICE) return
                 hidDevice = proxy as BluetoothHidDevice
-                val sdp = BluetoothHidDeviceAppSdpSettings(
-                    ProControllerProtocol.DEVICE_NAME,
-                    ProControllerProtocol.SDP_DESCRIPTION,
-                    ProControllerProtocol.SDP_PROVIDER,
-                    BluetoothHidDevice.SUBCLASS1_COMBO,
-                    ProControllerProtocol.HID_REPORT_DESCRIPTOR
-                )
-                val ok = hidDevice?.registerApp(sdp, null, null, ioExecutor, callback) ?: false
-                Log.i(TAG, "registerApp requested: $ok")
+                registerApp()
             }
 
             override fun onServiceDisconnected(profile: Int) {
@@ -127,6 +119,42 @@ class HidService : Service() {
                 }
             }
         }, BluetoothProfile.HID_DEVICE)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun registerApp() {
+        val sdp = BluetoothHidDeviceAppSdpSettings(
+            ProControllerProtocol.DEVICE_NAME,
+            ProControllerProtocol.SDP_DESCRIPTION,
+            ProControllerProtocol.SDP_PROVIDER,
+            BluetoothHidDevice.SUBCLASS1_COMBO,
+            ProControllerProtocol.HID_REPORT_DESCRIPTOR
+        )
+        val ok = hidDevice?.registerApp(sdp, null, null, ioExecutor, callback) ?: false
+        Log.i(TAG, "registerApp requested: $ok")
+    }
+
+    /**
+     * Drop any current link and re-advertise from scratch — the "reset connection" the UI
+     * exposes. Disconnects the host, re-registers the HID app (fresh SDP), and returns to
+     * simple input mode so the next Change Grip/Order attempt starts clean.
+     */
+    @SuppressLint("MissingPermission")
+    fun resetConnection() {
+        streaming = false
+        senderThread?.interrupt()
+        inputMode = ProControllerProtocol.REPORT_ID_INPUT_SIMPLE
+        val hid = hidDevice
+        runCatching { host?.let { hid?.disconnect(it) } }
+        host = null
+        notify(Status.IDLE, null)
+        ioExecutor.execute {
+            runCatching {
+                hid?.unregisterApp()
+                Thread.sleep(400)
+                registerApp()
+            }
+        }
     }
 
     /** Ask the console (a bonded device) to connect to us. */

@@ -22,6 +22,8 @@
     <string name="update_allow_source">Allow SwitchProCon to install updates, then tap Download again</string>
 
     <string name="connect">Connect</string>
+    <string name="reset">⟳ Reset</string>
+    <string name="reset_done">Connection reset — tap Connect ▸ Make discoverable, then open Change Grip/Order</string>
     <string name="loop">LOOP</string>
     <string name="m1">M1</string>
     <string name="m2">M2</string>
