@@ -43,6 +43,8 @@ class HidService : Service() {
     private var host: BluetoothDevice? = null
     @Volatile private var registered = false
     @Volatile private var streaming = false
+    // 0x3F simple mode until the console's 0x03 subcommand switches us to 0x30 full mode.
+    @Volatile private var inputMode = ProControllerProtocol.REPORT_ID_INPUT_SIMPLE
     private var senderThread: Thread? = null
 
     private val ioExecutor = Executors.newSingleThreadExecutor()
@@ -70,6 +72,30 @@ class HidService : Service() {
         } else {
             registerHidProfile()
         }
+        // When the console flips us to full mode, speed up and nudge it with an L+R press.
+        subcommandHandler.onInputModeChanged = { mode ->
+            if (mode == ProControllerProtocol.REPORT_ID_INPUT_FULL) {
+                inputMode = ProControllerProtocol.REPORT_ID_INPUT_FULL
+                pulseLR()
+            }
+        }
+    }
+
+    /**
+     * After the handshake, briefly hold L+R. Emulators must send an L+R press once the
+     * controller is accepted or the Switch won't register it (documented NXBT quirk).
+     */
+    private fun pulseLR() {
+        Thread {
+            try {
+                controllerState.setButton(ControllerState.Button.L, true)
+                controllerState.setButton(ControllerState.Button.R, true)
+                Thread.sleep(120)
+                controllerState.setButton(ControllerState.Button.L, false)
+                controllerState.setButton(ControllerState.Button.R, false)
+            } catch (_: InterruptedException) {
+            }
+        }.also { it.isDaemon = true; it.start() }
     }
 
     fun setListener(l: StatusListener?) {
@@ -127,6 +153,7 @@ class HidService : Service() {
             when (state) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     host = device
+                    inputMode = ProControllerProtocol.REPORT_ID_INPUT_SIMPLE
                     notify(Status.CONNECTED, device)
                     startStreaming()
                 }
@@ -170,12 +197,24 @@ class HidService : Service() {
             try {
                 while (streaming) {
                     val device = host ?: break
-                    hidDevice?.sendReport(
-                        device,
-                        ProControllerProtocol.REPORT_ID_INPUT_FULL,
-                        controllerState.buildInputReport()
-                    )
-                    Thread.sleep(15) // ~60 Hz
+                    if (inputMode == ProControllerProtocol.REPORT_ID_INPUT_FULL) {
+                        // Full mode: stream 0x30 at ~60 Hz.
+                        hidDevice?.sendReport(
+                            device,
+                            ProControllerProtocol.REPORT_ID_INPUT_FULL,
+                            controllerState.buildInputReport()
+                        )
+                        Thread.sleep(15)
+                    } else {
+                        // Change Grip/Order phase: 0x3F at ~15 Hz. Going faster here makes
+                        // firmware 12+ drop the connection.
+                        hidDevice?.sendReport(
+                            device,
+                            ProControllerProtocol.REPORT_ID_INPUT_SIMPLE,
+                            controllerState.buildSimpleReport()
+                        )
+                        Thread.sleep(66)
+                    }
                 }
             } catch (_: InterruptedException) {
                 // stopped

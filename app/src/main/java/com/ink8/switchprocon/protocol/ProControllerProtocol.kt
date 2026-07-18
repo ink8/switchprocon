@@ -18,6 +18,7 @@ object ProControllerProtocol {
     const val SDP_DESCRIPTION = "Wireless Gamepad"
 
     const val REPORT_ID_INPUT_FULL = 0x30   // standard full input report we push at 60 Hz
+    const val REPORT_ID_INPUT_SIMPLE = 0x3F // simple input mode used before the handshake
     const val REPORT_ID_INPUT_REPLY = 0x21  // subcommand reply
     const val REPORT_ID_OUTPUT_RUMBLE_SUB = 0x01
     const val REPORT_ID_OUTPUT_RUMBLE = 0x10

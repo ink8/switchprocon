@@ -69,6 +69,19 @@ class ControllerState {
         return data
     }
 
+    /**
+     * Build the 0x3F "simple" input report body (without report id) sent during the
+     * Change Grip/Order phase before the console switches us to 0x30. Buttons use the
+     * simple mapping; sticks are reported as centered 8-direction hat + 16-bit axes.
+     */
+    fun buildSimpleReport(): ByteArray = byteArrayOf(
+        (right and 0xFF).toByte(),
+        (left and 0xFF).toByte(),
+        0x08,                              // hat: neutral
+        0x00, 0x80.toByte(), 0x00, 0x80.toByte(), // left stick centered (16-bit)
+        0x00, 0x80.toByte(), 0x00, 0x80.toByte()  // right stick centered
+    )
+
     private fun packStick(out: ByteArray, offset: Int, x: Int, y: Int) {
         out[offset] = (x and 0xFF).toByte()
         out[offset + 1] = (((y and 0x0F) shl 4) or ((x shr 8) and 0x0F)).toByte()
