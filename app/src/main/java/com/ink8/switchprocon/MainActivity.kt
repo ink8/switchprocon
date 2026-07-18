@@ -2,13 +2,17 @@ package com.ink8.switchprocon
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.widget.ArrayAdapter
 import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
@@ -50,6 +54,9 @@ class MainActivity : AppCompatActivity(), HidService.StatusListener {
     private var accentTargets: List<Button> = emptyList()
     private var macroButtons: List<Button> = emptyList()
     private var profileButtons: List<Button> = emptyList()
+
+    private var scanReceiver: BroadcastReceiver? = null
+    private var deviceDialog: AlertDialog? = null
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, ib: IBinder?) {
@@ -344,6 +351,12 @@ class MainActivity : AppCompatActivity(), HidService.StatusListener {
         bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
+    /**
+     * Live device picker. Shows previously-paired devices AND actively scans for nearby
+     * ones, and offers to put the tablet into discoverable mode — because the Switch pairs
+     * by *finding the controller*, so the reliable path is making us discoverable and then
+     * opening Change Grip/Order on the console.
+     */
     @SuppressLint("MissingPermission")
     private fun pickHostAndConnect() {
         val svc = service ?: return
@@ -352,16 +365,60 @@ class MainActivity : AppCompatActivity(), HidService.StatusListener {
             toast("Enable Bluetooth first")
             return
         }
-        val bonded: List<BluetoothDevice> = adapter.bondedDevices?.toList() ?: emptyList()
-        if (bonded.isEmpty()) {
-            toast("No paired devices. On the Switch: System Settings ▸ Controllers ▸ Change Grip/Order, then pair.")
-            return
+
+        val devices = mutableListOf<BluetoothDevice>()
+        val labels = mutableListOf<String>()
+        val listAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, labels)
+
+        fun addDevice(d: BluetoothDevice, suffix: String) {
+            if (devices.any { it.address == d.address }) return
+            devices.add(d)
+            labels.add("${d.name ?: "Unknown device"}   ${d.address}$suffix")
+            listAdapter.notifyDataSetChanged()
         }
-        val names = bonded.map { it.name ?: it.address }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle("Connect to Switch")
-            .setItems(names) { _, i -> svc.connectTo(bonded[i]) }
+
+        adapter.bondedDevices?.forEach { addDevice(it, "   • paired") }
+
+        scanReceiver = object : BroadcastReceiver() {
+            @Suppress("DEPRECATION")
+            override fun onReceive(context: Context?, intent: Intent) {
+                if (intent.action == BluetoothDevice.ACTION_FOUND) {
+                    val d = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                    if (d != null) addDevice(d, "   • nearby")
+                }
+            }
+        }
+        registerReceiver(scanReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
+        adapter.startDiscovery()
+
+        deviceDialog = AlertDialog.Builder(this)
+            .setTitle("Scanning for nearby devices…")
+            .setAdapter(listAdapter) { _, i -> stopScan(adapter); svc.connectTo(devices[i]) }
+            .setNeutralButton("Make tablet discoverable") { _, _ ->
+                stopScan(adapter)
+                requestDiscoverable()
+            }
+            .setNegativeButton("Close") { _, _ -> stopScan(adapter) }
+            .setOnDismissListener { stopScan(adapter) }
             .show()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun stopScan(adapter: BluetoothAdapter?) {
+        try {
+            adapter?.cancelDiscovery()
+        } catch (_: SecurityException) {
+        }
+        scanReceiver?.let { runCatching { unregisterReceiver(it) } }
+        scanReceiver = null
+    }
+
+    /** Ask Android to make us discoverable so the Switch's Change Grip/Order scan finds us. */
+    private fun requestDiscoverable() {
+        val intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+            .putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120)
+        runCatching { startActivity(intent) }
+        toast("Now open Change Grip/Order on your Switch")
     }
 
     // ---- Status ----
@@ -382,6 +439,9 @@ class MainActivity : AppCompatActivity(), HidService.StatusListener {
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
     override fun onDestroy() {
+        deviceDialog?.dismiss()
+        scanReceiver?.let { runCatching { unregisterReceiver(it) } }
+        scanReceiver = null
         if (bound) {
             service?.setListener(null)
             unbindService(connection)
