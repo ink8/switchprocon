@@ -47,13 +47,30 @@
         app:layout_constraintStart_toEndOf="@id/shouldersLeft"
         app:layout_constraintEnd_toStartOf="@id/shouldersRight" />
 
-    <Button
-        android:id="@+id/btn_connect"
-        style="@style/Pill"
-        android:text="@string/connect"
+    <LinearLayout
+        android:id="@+id/topRow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         app:layout_constraintTop_toBottomOf="@id/txt_status"
         app:layout_constraintStart_toStartOf="@id/txt_status"
-        app:layout_constraintEnd_toEndOf="@id/txt_status" />
+        app:layout_constraintEnd_toEndOf="@id/txt_status">
+
+        <Button
+            android:id="@+id/btn_connect"
+            style="@style/Pill"
+            android:text="@string/connect" />
+
+        <Button android:id="@+id/btn_p1" style="@style/Sys" android:text="@string/p1"
+            android:layout_marginStart="10dp" android:textSize="13sp" />
+        <Button android:id="@+id/btn_p2" style="@style/Sys" android:text="@string/p2"
+            android:textSize="13sp" />
+        <Button android:id="@+id/btn_p3" style="@style/Sys" android:text="@string/p3"
+            android:textSize="13sp" />
+        <Button android:id="@+id/btn_settings" style="@style/Sys" android:text="@string/settings_gear"
+            android:textSize="18sp" />
+    </LinearLayout>
 
     <!-- ===== Left stick ===== -->
     <com.ink8.switchprocon.ui.JoystickView
@@ -128,6 +145,7 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
+            android:id="@+id/logo_icon"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:src="@drawable/ic_stat_controller"
@@ -150,6 +168,7 @@
                 android:letterSpacing="0.12" />
 
             <TextView
+                android:id="@+id/logo_procon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/logo_procon"
@@ -186,11 +205,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <Button android:id="@+id/btn_rec" style="@style/Pill" android:text="@string/rec" />
-        <Button android:id="@+id/btn_play" style="@style/Pill" android:text="@string/play"
+        <Button android:id="@+id/btn_m1" style="@style/Pill" android:text="@string/m1" />
+        <Button android:id="@+id/btn_m2" style="@style/Pill" android:text="@string/m2"
+            android:layout_marginStart="8dp" />
+        <Button android:id="@+id/btn_m3" style="@style/Pill" android:text="@string/m3"
+            android:layout_marginStart="8dp" />
+        <Button android:id="@+id/btn_m4" style="@style/Pill" android:text="@string/m4"
             android:layout_marginStart="8dp" />
         <Button android:id="@+id/btn_loop" style="@style/Pill" android:text="@string/loop"
-            android:layout_marginStart="8dp" />
+            android:layout_marginStart="16dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -22,9 +22,32 @@
     <string name="update_allow_source">Allow SwitchProCon to install updates, then tap Download again</string>
 
     <string name="connect">Connect</string>
-    <string name="rec">REC</string>
-    <string name="play">PLAY</string>
     <string name="loop">LOOP</string>
+    <string name="m1">M1</string>
+    <string name="m2">M2</string>
+    <string name="m3">M3</string>
+    <string name="m4">M4</string>
+    <string name="settings_gear">⚙</string>
+    <string name="rec_indicator">●REC</string>
+    <string name="p1">P1</string>
+    <string name="p2">P2</string>
+    <string name="p3">P3</string>
+
+    <string name="settings_title">Controller settings</string>
+    <string name="settings_accent">Light color</string>
+    <string name="settings_turbo">Turbo speed</string>
+    <string name="settings_turbo_value">%1$d presses/sec</string>
+    <string name="settings_sens">Stick sensitivity</string>
+    <string name="settings_sens_value">%1$d%%</string>
+    <string name="settings_haptics">Vibrate on button press</string>
+
+    <string name="macro_recording">Recording %1$s — press it again to save</string>
+    <string name="macro_saved">%1$s saved</string>
+    <string name="macro_empty">%1$s is empty — long-press it to record a macro</string>
+    <string name="macro_cleared">%1$s cleared</string>
+    <string name="profile_loaded">Profile %1$d loaded</string>
+    <string name="profile_saved">Current setup saved to profile %1$d</string>
+    <string name="profile_empty">Profile %1$d is empty — long-press to save your setup</string>
 
     <string name="btn_a">A</string>
     <string name="btn_b">B</string>

@@ -2,64 +2,77 @@ package com.ink8.switchprocon.input
 
 import com.ink8.switchprocon.protocol.ControllerState
 import com.ink8.switchprocon.protocol.ControllerState.Button
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Collections
 
 /**
- * The three "power" features layered on top of raw button input:
+ * Power features layered on top of raw input, modeled after the Manba One's back keys:
  *
- *  - **Record / replay**: capture a timed sequence of button presses and play it back.
- *  - **Loop**: replay the recorded macro continuously until stopped.
- *  - **Turbo**: auto-fire — while a turbo button is held, toggle it on/off rapidly.
+ *  - **Macro slots M1–M4**: each slot records its own timed button sequence ("ultimate
+ *    move") and replays it with one tap. Long-press a slot to record into it.
+ *  - **Loop**: replay the played slot continuously until stopped.
+ *  - **Turbo**: auto-fire on any held button, with adjustable speed.
  *
- * All button input from the UI should flow through [press] so it can be recorded. Turbo and
- * playback drive [ControllerState] directly on background threads.
+ * All live button input flows through [press] so an in-progress recording captures it.
+ * Slots serialize to JSON so profiles can save/restore them.
  */
 class MacroEngine(private val state: ControllerState) {
 
     data class Event(val offsetMs: Long, val button: Button, val pressed: Boolean)
 
-    private val recorded = mutableListOf<Event>()
-    private val turboButtons: MutableSet<Button> = Collections.synchronizedSet(mutableSetOf())
+    /** Recorded macro per slot, or null if empty. */
+    val slots = arrayOfNulls<List<Event>>(SLOT_COUNT)
 
-    @Volatile var isRecording = false
+    @Volatile var recordingSlot = -1
         private set
     @Volatile var isPlaying = false
         private set
     @Volatile var loopEnabled = false
+    @Volatile var turboIntervalMs: Long = 66 // ~15 presses/sec (on+off phases)
 
-    var turboIntervalMs: Long = 33 // ~15 presses/sec
-
+    private val recordBuffer = mutableListOf<Event>()
     private var recordStartMs = 0L
+    private val turboButtons: MutableSet<Button> = Collections.synchronizedSet(mutableSetOf())
     private var playThread: Thread? = null
     private var turboThread: Thread? = null
 
-    /** Apply a live button press from the UI, recording it if a recording is in progress. */
+    /** Apply a live button press, recording it if a slot recording is in progress. */
     fun press(button: Button, pressed: Boolean) {
         state.setButton(button, pressed)
-        if (isRecording) {
-            synchronized(recorded) {
-                recorded.add(Event(System.currentTimeMillis() - recordStartMs, button, pressed))
+        if (recordingSlot >= 0) {
+            synchronized(recordBuffer) {
+                recordBuffer.add(Event(System.currentTimeMillis() - recordStartMs, button, pressed))
             }
         }
     }
 
-    fun startRecording() {
+    /**
+     * Start recording into [slot], or — if that slot is already recording — stop and save.
+     * @return true if now recording, false if recording just stopped.
+     */
+    fun toggleRecording(slot: Int): Boolean {
+        if (recordingSlot == slot) {
+            synchronized(recordBuffer) {
+                slots[slot] = if (recordBuffer.isEmpty()) null else recordBuffer.toList()
+                recordBuffer.clear()
+            }
+            recordingSlot = -1
+            return false
+        }
         stopPlayback()
-        synchronized(recorded) { recorded.clear() }
+        synchronized(recordBuffer) { recordBuffer.clear() }
         recordStartMs = System.currentTimeMillis()
-        isRecording = true
+        recordingSlot = slot
+        return true
     }
 
-    fun stopRecording() {
-        isRecording = false
-    }
+    fun hasMacro(slot: Int): Boolean = slots.getOrNull(slot) != null
 
-    fun hasRecording(): Boolean = synchronized(recorded) { recorded.isNotEmpty() }
-
-    /** Replay the recorded macro once, or forever if [loopEnabled] is set. */
-    fun startPlayback() {
-        if (isPlaying || !hasRecording()) return
-        val events = synchronized(recorded) { recorded.toList() }
+    /** Fire a slot's macro once, or forever while [loopEnabled] is on. */
+    fun playSlot(slot: Int) {
+        val events = slots.getOrNull(slot) ?: return
+        if (isPlaying) stopPlayback()
         isPlaying = true
         playThread = Thread {
             try {
@@ -87,6 +100,8 @@ class MacroEngine(private val state: ControllerState) {
         playThread = null
     }
 
+    // ---- Turbo ----
+
     fun toggleTurbo(button: Button): Boolean {
         val nowOn = if (turboButtons.contains(button)) {
             turboButtons.remove(button); false
@@ -108,7 +123,7 @@ class MacroEngine(private val state: ControllerState) {
                     on = !on
                     val snapshot = synchronized(turboButtons) { turboButtons.toList() }
                     for (b in snapshot) state.setButton(b, on)
-                    Thread.sleep(turboIntervalMs)
+                    Thread.sleep(turboIntervalMs / 2)
                 }
             } catch (_: InterruptedException) {
                 // stopped
@@ -116,10 +131,43 @@ class MacroEngine(private val state: ControllerState) {
         }.also { it.isDaemon = true; it.start() }
     }
 
+    // ---- Profile serialization ----
+
+    fun slotsToJson(): JSONArray {
+        val arr = JSONArray()
+        for (slot in slots) {
+            val slotArr = JSONArray()
+            slot?.forEach { e ->
+                slotArr.put(
+                    JSONObject().put("t", e.offsetMs).put("b", e.button.name).put("p", e.pressed)
+                )
+            }
+            arr.put(slotArr)
+        }
+        return arr
+    }
+
+    fun loadSlotsFromJson(arr: JSONArray) {
+        for (i in 0 until SLOT_COUNT) {
+            val slotArr = arr.optJSONArray(i)
+            slots[i] = if (slotArr == null || slotArr.length() == 0) null else {
+                (0 until slotArr.length()).mapNotNull { j ->
+                    val o = slotArr.getJSONObject(j)
+                    val button = runCatching { Button.valueOf(o.getString("b")) }.getOrNull()
+                    button?.let { Event(o.getLong("t"), it, o.getBoolean("p")) }
+                }
+            }
+        }
+    }
+
     fun shutdown() {
         stopPlayback()
         turboThread?.interrupt()
         turboThread = null
         turboButtons.clear()
+    }
+
+    companion object {
+        const val SLOT_COUNT = 4
     }
 }

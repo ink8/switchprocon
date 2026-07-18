@@ -30,6 +30,14 @@ class JoystickView @JvmOverloads constructor(
     }
     private val thumbPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#8B93A1") }
 
+    /** Recolor the ring to the current accent — the on-screen version of RGB lighting. */
+    fun setAccent(color: Int) {
+        ringPaint.color = color
+        ringPaint.setShadowLayer(12f, 0f, 0f, color)
+        setLayerType(LAYER_TYPE_SOFTWARE, null) // shadow layers need software rendering
+        invalidate()
+    }
+
     private var centerX = 0f
     private var centerY = 0f
     private var thumbX = 0f
