@@ -7,6 +7,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed to create Releases
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,12 +29,30 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+      # Every build gets a unique, ever-increasing versionCode (= run number) so the
+      # in-app updater can tell old from new.
+      - name: Build signed release APK
+        run: ./gradlew assembleRelease --no-daemon -PbuildNumber=${{ github.run_number }}
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/release/app-release.apk SwitchProCon-build-${{ github.run_number }}.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: switchprocon-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: switchprocon-apk
+          path: SwitchProCon-build-${{ github.run_number }}.apk
           if-no-files-found: error
+
+      # Permanent, versioned history: one Release per build, never deleted.
+      # The in-app updater reads /releases/latest and compares the build number.
+      - name: Publish GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: SwitchProCon 0.2.${{ github.run_number }}
+          files: SwitchProCon-build-${{ github.run_number }}.apk
+          body: |
+            Automated build from commit ${{ github.sha }}.
+            Install the attached APK, or let the in-app updater fetch it.

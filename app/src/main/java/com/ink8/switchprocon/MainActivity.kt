@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import com.ink8.switchprocon.bluetooth.HidService
 import com.ink8.switchprocon.databinding.ActivityMainBinding
 import com.ink8.switchprocon.protocol.ControllerState.Button
+import com.ink8.switchprocon.update.UpdateChecker
 
 /**
  * The on-screen controller. Binds to [HidService] for the shared controller state and
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity(), HidService.StatusListener {
         setContentView(binding.root)
         binding.btnConnect.setOnClickListener { pickHostAndConnect() }
         ensurePermissionsThenStart()
+        UpdateChecker(this).checkAsync()
     }
 
     private fun ensurePermissionsThenStart() {

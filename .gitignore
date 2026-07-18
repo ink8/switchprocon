@@ -14,3 +14,6 @@ local.properties
 *.aab
 *.keystore
 !debug.keystore
+# The shared app-signing key — committed on purpose so CI and local builds
+# produce APKs that update over each other.
+!app/switchprocon.keystore
